@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} network - PMONexus{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <div class="rounded-2xl bg-white p-5 shadow-card">
+    <p class="text-xs text-slate-400">
+      <a href="{% url 'pmo:portfolio_list' %}" class="hover:text-brand-600">Portfolios</a>
+      {% if portfolio %} / <span class="text-slate-500">{{ portfolio.name }}</span>{% endif %}
+      / <a href="{% url 'pmo:project_detail' project.id %}" class="hover:text-brand-600">{{ project.name }}</a>
+      / <span class="text-slate-500">Network diagram</span>
+    </p>
+    <div class="mt-1 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-semibold">{{ project.name }} — Network diagram</h1>
+      <div class="flex items-center gap-3">
+        <span class="flex items-center gap-1.5 text-xs text-slate-500">
+          <span class="inline-block h-3 w-3 rounded border-2 border-red-500"></span>Critical path
+        </span>
+        <a href="{% url 'pmo:project_detail' project.id %}"
+           class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+          <i data-lucide="gantt-chart" class="h-4 w-4"></i>Gantt plan
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card overflow-auto p-4">
+    <svg id="net-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    <p id="net-empty" class="hidden p-6 text-sm italic text-slate-400">No linked tasks yet — add predecessors on the Gantt plan to see the network.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  'use strict';
+
+  const PROJECT_ID = {{ project.id }};
+  const NODE_W = 190, NODE_H = 84, GAP_X = 80, GAP_Y = 26;
+
+  const D = (s) => s ? new Date(s + 'T00:00:00') : null;
+  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const fmt = (s) => D(s).toLocaleDateString('en', { day: 'numeric', month: 'short' });
+
+  let calendar = { working_days: [1, 2, 3, 4, 5], holidays: [] };
+  let holidaySet = new Set();
+  const isoDow = (d) => d.getDay() === 0 ? 7 : d.getDay();
+  const isWork = (d) => calendar.working_days.includes(isoDow(d)) && !holidaySet.has(iso(d));
+  function shiftWork(d, n) {
+    let x = new Date(d);
+    const fwd = n >= 0;
+    while (!isWork(x)) x = addDays(x, fwd ? 1 : -1);
+    for (let i = 0; i < Math.abs(n); i++) {
+      x = addDays(x, fwd ? 1 : -1);
+      while (!isWork(x)) x = addDays(x, fwd ? 1 : -1);
+    }
+    return x;
+  }
+  function countWork(a, b) {
+    if (!a || !b || b < a) return 0;
+    let n = 0, d = new Date(a);
+    while (d <= b) { if (isWork(d)) n++; d = addDays(d, 1); }
+    return Math.max(1, n);
+  }
+  function startForEnd(end, dur) { return shiftWork(end, -(Math.max(1, dur) - 1)); }
+
+  fetch(`/projects/${PROJECT_ID}/tasks-data/`).then(r => r.json()).then(data => {
+    calendar = data.calendar || calendar;
+    holidaySet = new Set((calendar.holidays || []).map(h => h.date));
+    const tasks = data.tasks;
+    const leaf = tasks.filter(t => !tasks.some(x => x.parent_id === t.id) && t.start && t.end);
+    const byId = new Map(leaf.map(t => [t.id, t]));
+
+    // Only nodes participating in the dependency network (plus isolated roots shown too).
+    const inNetwork = new Set();
+    for (const t of leaf) {
+      for (const p of (t.predecessors || [])) {
+        if (byId.has(p.id)) { inNetwork.add(t.id); inNetwork.add(p.id); }
+      }
+    }
+    const nodes = leaf.filter(t => inNetwork.size ? inNetwork.has(t.id) : true);
+    if (!nodes.length) {
+      document.getElementById('net-empty').classList.remove('hidden');
+      return;
+    }
+
+    // Critical path: same driving-chain trace as the Gantt.
+    function requiredStartVia(pred, succ, type, lag) {
+      const dur = countWork(D(succ.start), D(succ.end));
+      if (type === 'SS') return shiftWork(D(pred.start), lag);
+      if (type === 'FF') return startForEnd(shiftWork(D(pred.end), lag), dur);
+      if (type === 'SF') return startForEnd(shiftWork(D(pred.start), lag), dur);
+      return shiftWork(D(pred.end), 1 + lag);
+    }
+    const critical = new Set();
+    const projectEnd = leaf.reduce((m, t) => t.end > m ? t.end : m, leaf[0].end);
+    const cq = [];
+    for (const t of leaf) if (t.end === projectEnd) { critical.add(t.id); cq.push(t); }
+    while (cq.length) {
+      const succ = cq.pop();
+      for (const p of (succ.predecessors || [])) {
+        const pred = byId.get(p.id);
+        if (!pred || critical.has(pred.id)) continue;
+        if (iso(requiredStartVia(pred, succ, p.type, p.lag || 0)) === succ.start) {
+          critical.add(pred.id);
+          cq.push(pred);
+        }
+      }
+    }
+
+    // Layering: longest path depth from sources (topological).
+    const nodeIds = new Set(nodes.map(n => n.id));
+    const depth = new Map(nodes.map(n => [n.id, 0]));
+    let changed = true, guard = 0;
+    while (changed && guard++ < 200) {
+      changed = false;
+      for (const t of nodes) {
+        for (const p of (t.predecessors || [])) {
+          if (!nodeIds.has(p.id)) continue;
+          const want = depth.get(p.id) + 1;
+          if (want > depth.get(t.id)) { depth.set(t.id, want); changed = true; }
+        }
+      }
+    }
+    const layers = [];
+    for (const t of nodes.sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)) {
+      const d = depth.get(t.id);
+      (layers[d] = layers[d] || []).push(t);
+    }
+
+    const pos = new Map();
+    let maxRows = 0;
+    layers.forEach((layer, li) => {
+      maxRows = Math.max(maxRows, layer.length);
+      layer.forEach((t, ri) => pos.set(t.id, {
+        x: 20 + li * (NODE_W + GAP_X),
+        y: 20 + ri * (NODE_H + GAP_Y),
+      }));
+    });
+    const W = 40 + layers.length * (NODE_W + GAP_X);
+    const H = 40 + maxRows * (NODE_H + GAP_Y);
+
+    const svg = document.getElementById('net-svg');
+    svg.setAttribute('width', W);
+    svg.setAttribute('height', H);
+    const NS = 'http://www.w3.org/2000/svg';
+    const el = (tag, attrs, parent) => {
+      const e = document.createElementNS(NS, tag);
+      for (const k in attrs) e.setAttribute(k, attrs[k]);
+      (parent || svg).appendChild(e);
+      return e;
+    };
+
+    // edges first
+    for (const t of nodes) {
+      for (const p of (t.predecessors || [])) {
+        if (!pos.has(p.id)) continue;
+        const a = pos.get(p.id), b = pos.get(t.id);
+        const x1 = a.x + NODE_W, y1 = a.y + NODE_H / 2;
+        const x2 = b.x, y2 = b.y + NODE_H / 2;
+        const edgeCrit = critical.has(p.id) && critical.has(t.id);
+        const mid = x1 + (x2 - x1) / 2;
+        el('path', {
+          d: `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2 - 6} ${y2}`,
+          fill: 'none', stroke: edgeCrit ? '#dc2626' : '#94a3b8',
+          'stroke-width': edgeCrit ? 2 : 1.3,
+        });
+        el('path', {
+          d: `M ${x2 - 6} ${y2 - 4} L ${x2} ${y2} L ${x2 - 6} ${y2 + 4} Z`,
+          fill: edgeCrit ? '#dc2626' : '#94a3b8',
+        });
+        const lagTxt = (p.lag ? (p.lag > 0 ? '+' + p.lag : p.lag) : '');
+        if (p.type !== 'FS' || lagTxt) {
+          el('text', { x: mid, y: (y1 + y2) / 2 - 4, 'text-anchor': 'middle', 'font-size': 9, fill: '#64748b' })
+            .textContent = p.type + lagTxt;
+        }
+      }
+    }
+
+    // nodes (classic PERT box: title / dates / duration + resource)
+    for (const t of nodes) {
+      const { x, y } = pos.get(t.id);
+      const crit = critical.has(t.id);
+      const g = el('g', { style: 'cursor:pointer' });
+      g.addEventListener('click', () => { window.location.href = `/projects/${PROJECT_ID}/`; });
+      el('rect', {
+        x, y, width: NODE_W, height: NODE_H, rx: 10, fill: '#fff',
+        stroke: crit ? '#dc2626' : '#cbd5e1', 'stroke-width': crit ? 2 : 1.2,
+      }, g);
+      el('rect', { x, y, width: NODE_W, height: 24, rx: 10, fill: crit ? '#fef2f2' : '#f8fafc' }, g);
+      el('rect', { x, y: y + 14, width: NODE_W, height: 10, fill: crit ? '#fef2f2' : '#f8fafc' }, g);
+      el('line', { x1: x, y1: y + 24, x2: x + NODE_W, y2: y + 24, stroke: crit ? '#fecaca' : '#e2e8f0' }, g);
+      const title = el('text', { x: x + 10, y: y + 16, 'font-size': 11, 'font-weight': 600, fill: '#0f172a' }, g);
+      title.textContent = (t.is_milestone ? '◆ ' : '') + (t.title.length > 26 ? t.title.slice(0, 25) + '…' : t.title);
+      el('text', { x: x + 10, y: y + 41, 'font-size': 10, fill: '#475569' }, g)
+        .textContent = `${fmt(t.start)} → ${fmt(t.end)}  ·  ${t.is_milestone ? '0' : countWork(D(t.start), D(t.end))}d`;
+      el('text', { x: x + 10, y: y + 58, 'font-size': 10, fill: '#64748b' }, g)
+        .textContent = t.assignee ? t.assignee.name.slice(0, 24) : 'Unassigned';
+      el('text', { x: x + 10, y: y + 74, 'font-size': 10, fill: crit ? '#dc2626' : '#94a3b8' }, g)
+        .textContent = crit ? 'CRITICAL' : `${t.progress}% complete`;
+    }
+  });
+})();
+</script>
+{% endblock %}

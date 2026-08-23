@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}PMONexus{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          boxShadow: { card: '0 10px 25px rgba(15,23,42,.08)' },
+          colors: { brand: { 50: '#e6ecf7', 500: '#0047c2', 600: '#0033a0', 700: '#002678' } },
+        },
+      },
+    };
+  </script>
+  <style>
+    :root {
+      --page-bg: #f8fafc; --page-fg: #0f172a; --panel-bg: #ffffff; --panel-border: #e2e8f0;
+      --pj-green: #0033a0; --pj-green-dark: #002678;   /* corporate blue */
+    }
+    html[data-skin="slate"] { --page-bg: #e7ecf3; --panel-bg: #f7f9fc; }
+    html[data-skin="sand"]  { --page-bg: #faf6ee; --panel-bg: #fffdf8; --panel-border: #eadfc8; }
+    html[data-skin="mint"]  { --page-bg: #eef7f2; --panel-bg: #fbfffd; --panel-border: #d3e8dd; }
+    html[data-skin="dusk"]  { --page-bg: #eceafb; --panel-bg: #fbfaff; --panel-border: #ddd8f0; }
+    html, body { background: var(--page-bg); color: var(--page-fg); }
+    body { font-family: Arial, Helvetica, sans-serif; }
+    .card { border-radius: 1rem; border: 1px solid var(--panel-border); background: var(--panel-bg); box-shadow: 0 10px 25px rgba(15,23,42,.08); }
+    .bg-white { background-color: var(--panel-bg) !important; }
+    .badge { display: inline-flex; align-items: center; border-radius: 9999px; padding: 0.25rem 0.625rem; font-size: 0.75rem; font-weight: 500; }
+    /* ---- top application bar (replaces the old left sidebar) ---- */
+    .appbar { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 8px;
+      padding: 0 16px; height: 52px; background: linear-gradient(180deg, var(--pj-green), var(--pj-green-dark));
+      color: #fff; box-shadow: 0 2px 10px rgba(15,23,42,.12); }
+    .appbar .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: 12px; }
+    .appbar .ntt-logo { display: block; height: 19px; }
+    .appbar .brand-sep { width: 1px; height: 22px; background: rgba(255,255,255,.35); }
+    .appbar .brand-app { display: inline-flex; align-items: center; gap: 6px; color: #fff; font-weight: 700; font-size: .9rem; letter-spacing: .01em; }
+    .appbar .brand-app i { opacity: .85; }
+    .appbar nav { display: flex; align-items: center; gap: 2px; }
+    .appbar nav a { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 8px;
+      color: #eafaf0; font-size: .8125rem; font-weight: 600; text-decoration: none; }
+    .appbar nav a:hover { background: rgba(255,255,255,.14); color: #fff; }
+    .appbar nav a.active { background: rgba(255,255,255,.2); color: #fff; }
+    .appbar .spring { flex: 1; }
+    .appbar .who { font-size: .78rem; opacity: .92; }
+    .appbar select { background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25); color: #fff; border-radius: 8px; padding: 5px 8px; font-size: .78rem; }
+    .appbar select option { color: #0f172a; }
+    .appbar .menu-toggle { display: none; background: rgba(255,255,255,.16); border: none; color: #fff; border-radius: 8px; padding: 6px 9px; cursor: pointer; }
+    @media (max-width: 820px) {
+      .appbar nav { position: absolute; top: 52px; left: 0; right: 0; flex-direction: column; align-items: stretch;
+        background: var(--pj-green-dark); padding: 6px; gap: 2px; display: none; }
+      .appbar nav.open { display: flex; }
+      .appbar .menu-toggle { display: inline-flex; }
+    }
+    @media print { .appbar { display: none !important; } }
+  </style>
+  <script>
+    // Apply saved skin before paint (change request #16).
+    document.documentElement.dataset.skin = localStorage.getItem('pmo-skin') || 'default';
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen">
+  <header class="appbar">
+    <a href="{% url 'pmo:project_list' %}" class="brand">
+      <span class="brand-app"><i data-lucide="gantt-chart" class="h-5 w-5"></i>PMONexus</span>
+    </a>
+    <button class="menu-toggle" onclick="document.getElementById('app-nav').classList.toggle('open')" aria-label="Menu">
+      <i data-lucide="menu" class="h-4 w-4"></i>
+    </button>
+    <nav id="app-nav">
+      <a href="{% url 'pmo:dashboard' %}"><i data-lucide="layout-dashboard" class="h-4 w-4"></i>Dashboard</a>
+      <a href="{% url 'pmo:portfolio_list' %}"><i data-lucide="layers-3" class="h-4 w-4"></i>Portfolios</a>
+      <a href="{% url 'pmo:portfolio_rollup' %}"><i data-lucide="bar-chart-3" class="h-4 w-4"></i>Roll-up</a>
+      <a href="{% url 'pmo:project_list' %}"><i data-lucide="folder-kanban" class="h-4 w-4"></i>Projects</a>
+      <a href="{% url 'pmo:raid_overview' %}"><i data-lucide="shield-alert" class="h-4 w-4"></i>Risk / RAID</a>
+      <a href="{% url 'pmo:team' %}"><i data-lucide="users-2" class="h-4 w-4"></i>Team</a>
+      <a href="{% url 'pmo:capabilities' %}"><i data-lucide="sparkles" class="h-4 w-4"></i>Capabilities</a>
+    </nav>
+    <span class="spring"></span>
+    {% if pmo_user %}<span class="who">{{ pmo_user.name }}</span>{% endif %}
+    <select id="skin-select" title="Theme">
+      <option value="default">Classic</option>
+      <option value="slate">Slate</option>
+      <option value="sand">Sand</option>
+      <option value="mint">Mint</option>
+      <option value="dusk">Dusk</option>
+    </select>
+  </header>
+  <main class="mx-auto max-w-[1760px] px-4 py-4 lg:px-8 lg:py-6">
+    {% block content %}{% endblock %}
+  </main>
+  <script>
+    lucide.createIcons();
+    // Highlight the active top-nav link.
+    (function () {
+      const path = window.location.pathname;
+      document.querySelectorAll('#app-nav a').forEach(a => {
+        const href = a.getAttribute('href');
+        if (href && href !== '/' && path.startsWith(href)) a.classList.add('active');
+        else if (href === '/' && path === '/') a.classList.add('active');
+      });
+    })();
+    const skinSel = document.getElementById('skin-select');
+    skinSel.value = document.documentElement.dataset.skin;
+    skinSel.addEventListener('change', () => {
+      document.documentElement.dataset.skin = skinSel.value;
+      localStorage.setItem('pmo-skin', skinSel.value);
+    });
+  </script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

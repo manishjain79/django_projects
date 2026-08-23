@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Open RAID - PMONexus{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <div>
+    <h1 class="text-3xl font-semibold">Open RAID items</h1>
+    <p class="mt-1 text-sm text-slate-500">Everything open across your projects. Click a project to edit its log.</p>
+  </div>
+  <div class="card overflow-x-auto">
+    <table class="min-w-full text-left text-sm">
+      <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+        <tr><th class="px-4 py-2">Project</th><th class="px-4 py-2">Type</th><th class="px-4 py-2">Title</th>
+            <th class="px-4 py-2">Priority</th><th class="px-4 py-2">Status</th><th class="px-4 py-2">Owner</th><th class="px-4 py-2">Due</th></tr>
+      </thead>
+      <tbody>
+        {% for i in items %}
+        <tr class="border-t border-slate-100 hover:bg-slate-50 {% if i.priority == 'CRITICAL' %}bg-red-50{% endif %}">
+          <td class="px-4 py-2"><a class="text-brand-600 hover:underline" href="{% url 'pmo:raid_list' i.project.id %}">{{ i.project.name }}</a></td>
+          <td class="px-4 py-2"><span class="badge bg-slate-100 text-slate-600">{{ i.get_type_display }}</span></td>
+          <td class="px-4 py-2 font-medium">{{ i.title }}</td>
+          <td class="px-4 py-2 {% if i.priority == 'CRITICAL' %}font-semibold text-red-600{% elif i.priority == 'HIGH' %}text-amber-600{% endif %}">{{ i.get_priority_display }}</td>
+          <td class="px-4 py-2">{{ i.get_status_display }}</td>
+          <td class="px-4 py-2">{{ i.owner.name|default:"—" }}</td>
+          <td class="px-4 py-2 text-slate-500">{{ i.due_date|date:"d M Y"|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="px-4 py-8 text-center italic text-slate-400">No open RAID items. 🎉</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

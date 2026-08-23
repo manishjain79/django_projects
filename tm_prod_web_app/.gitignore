@@ -1,0 +1,6 @@
+__pycache__/
+ciassociatedservice/views/local/
+ciassociatedservice/appfiles/
+.vscode/
+venv-py310-django
+db.sqlite3

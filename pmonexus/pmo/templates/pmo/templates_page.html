@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Templates - PMONexus{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <div>
+    <h1 class="text-3xl font-semibold">Project templates</h1>
+    <p class="mt-1 text-sm text-slate-500">
+      Save any plan as a template from its ribbon (Templates → Save as Template), then start new projects from here
+      or from the New Project dialog. Templates keep hierarchy, working-day durations, dependencies and milestones.
+    </p>
+  </div>
+
+  <div class="card overflow-hidden">
+    <h2 class="px-5 pt-4 text-lg font-semibold">Your templates</h2>
+    <table class="mt-3 min-w-full text-left text-sm">
+      <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+        <tr><th class="px-5 py-2">Name</th><th class="px-3 py-2">Description</th><th class="px-3 py-2">Tasks</th>
+            <th class="px-3 py-2">Created</th><th class="px-3 py-2">By</th><th class="px-3 py-2"></th></tr>
+      </thead>
+      <tbody>
+        {% for t in tpls %}
+        <tr class="border-t border-slate-100 hover:bg-slate-50" data-id="{{ t.id }}">
+          <td class="px-5 py-3 font-medium">{{ t.name }}</td>
+          <td class="px-3 py-3 text-slate-500">{{ t.description|default:"—" }}</td>
+          <td class="px-3 py-3">{{ t.data_json.tasks|length }}</td>
+          <td class="px-3 py-3 text-slate-500">{{ t.created_at|date:"d M Y" }}</td>
+          <td class="px-3 py-3 text-slate-500">{{ t.created_by.name|default:"—" }}</td>
+          <td class="px-3 py-3">
+            <div class="flex justify-end gap-2">
+              <button class="tpl-use rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700">New project</button>
+              <button class="tpl-del rounded-lg border border-slate-200 px-2 py-1.5 text-xs text-slate-400 hover:text-red-600">✕</button>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="px-5 py-8 text-center italic text-slate-400">No templates yet — save one from a plan, or add a starter below.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card p-5">
+    <h2 class="text-lg font-semibold">Starter gallery</h2>
+    <p class="mt-1 text-sm text-slate-500">Pre-built structures to copy into your templates (like Smartsheet's template gallery).</p>
+    <div class="mt-4 grid gap-4 md:grid-cols-2">
+      <div class="rounded-xl border border-slate-200 p-4">
+        <p class="font-semibold">Software Delivery</p>
+        <p class="mt-1 text-xs text-slate-500">Discovery → Design &amp; Build → Test &amp; Deploy · 10 tasks · sign-off and go-live milestones · linked end-to-end</p>
+        <button data-kind="software" class="tpl-builtin mt-3 rounded-lg border border-brand-600 px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50">Add to my templates</button>
+      </div>
+      <div class="rounded-xl border border-slate-200 p-4">
+        <p class="font-semibold">Client Rollout</p>
+        <p class="mt-1 text-xs text-slate-500">Kickoff → Configure → Migrate &amp; Train (parallel) → Cutover → Hypercare · uses SS links and lag</p>
+        <button data-kind="rollout" class="tpl-builtin mt-3 rounded-lg border border-brand-600 px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50">Add to my templates</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  function getCookie(n){const m=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)');return m?m.pop():'';}
+  async function post(url, data) {
+    const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')}, body: JSON.stringify(data||{}) });
+    if (!res.ok) { alert(await res.text()); throw new Error('failed'); }
+    return res.json();
+  }
+  document.querySelectorAll('tr[data-id]').forEach(tr => {
+    const id = tr.dataset.id;
+    const name = tr.querySelector('td').textContent.trim();
+    tr.querySelector('.tpl-use').addEventListener('click', async () => {
+      const pname = prompt('New project name:', name.replace(/ \(starter\)$/i, '').replace(/ template$/i, ''));
+      if (!pname || !pname.trim()) return;
+      const start = prompt('Start date (YYYY-MM-DD, blank = today):') || null;
+      const d = await post("{% url 'pmo:project_create' %}", { name: pname.trim(), template_id: parseInt(id), start_date: start });
+      window.location.href = d.url;
+    });
+    tr.querySelector('.tpl-del').addEventListener('click', async () => {
+      if (!confirm(`Delete template "${name}"?`)) return;
+      await post(`/templates/${id}/delete/`);
+      tr.remove();
+    });
+  });
+  document.querySelectorAll('.tpl-builtin').forEach(b => b.addEventListener('click', async () => {
+    await post("{% url 'pmo:template_add_builtin' %}", { kind: b.dataset.kind });
+    location.reload();
+  }));
+})();
+</script>
+{% endblock %}

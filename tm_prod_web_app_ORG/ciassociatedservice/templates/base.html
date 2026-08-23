@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        {% block title %}
+        {% endblock %}
+    </title>
+    <link rel="stylesheet" href="{% static 'stylesheets/general.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'stylesheets/page.css' %}" type="text/css">
+    <link rel="stylesheet" href="{% static 'stylesheets/header.css' %}" type="text/css">
+    <link rel="icon" type="image/x-icon" href="{% static 'images/NTT_DATA_FAVICON_Future_Blue.svg' %}">
+    {% block sidenav_css %}
+    {% endblock %}
+    <link rel="stylesheet" href="{% static 'stylesheets/contents.css' %}" type="text/css">
+    {% block sidenav_link_css %}
+    {% endblock %}
+    {% block mytable_css %}
+    {% endblock %}
+    {% block uploadform_css %}
+    {% endblock %}
+</head>
+<body>
+    <div class="page"> <!-- Entire page : flex direction column-->
+    
+        <header class="header"> <!-- header -->
+            <div class="leftsection">
+                <img src="{% static 'images/ntt-logo.png' %}">
+            </div>
+            <div class="middlesection"><p>Tokio Marine Asset List & Associated NTT Services</p></div>
+            <div class="rightsection">{{ name }}</div>
+        </header> <!-- end of header -->
+    
+        <!-- in home page,  contents is still a column flex and has homepage contents -->
+        <!-- in gclist page, contents display is row. It has sidenav and upload form -->
+        <!-- in assetlist page, contents display is row. It has sidenav and datatable -->
+        {% block contents_below_header %}
+        {% endblock %}
+        <!-- end of content division -->
+        
+        <!-- load datatable js -->
+        {% block datatable_js %}
+        {% endblock %}
+        {% block datatable_script %}
+        {% endblock %}
+    </div>
+</body>
+</html>

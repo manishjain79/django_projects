@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Capabilities - PMONexus{% endblock %}
+{% block extra_head %}
+<style>
+  .cap-card { display: flex; flex-direction: column; gap: .4rem; border: 1px solid var(--panel-border); border-radius: 1rem; background: var(--panel-bg); padding: 1.1rem 1.25rem; text-decoration: none; color: #0f172a; transition: border-color .1s, box-shadow .1s; }
+  .cap-card:hover { border-color: var(--pj-green); box-shadow: 0 6px 18px rgba(0,51,160,.12); }
+  .cap-card .i { width: 34px; height: 34px; border-radius: .6rem; background: var(--pj-green); color: #fff; display: inline-flex; align-items: center; justify-content: center; }
+  .cap-card h3 { font-weight: 700; font-size: .98rem; }
+  .cap-card p { font-size: .82rem; color: #64748b; }
+  .cap-sec { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: #94a3b8; font-weight: 700; margin: 1.5rem 0 .25rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <div>
+    <p class="text-xs uppercase tracking-[0.18em] text-slate-400">PMONexus</p>
+    <h1 class="mt-1 text-2xl font-semibold">Capabilities</h1>
+    <p class="mt-1 text-sm text-slate-500">Everything the tool does — open a project to use the planning features, or jump to a workspace view below.</p>
+  </div>
+
+  <p class="cap-sec">Planning &amp; scheduling</p>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a class="cap-card" href="{% url 'pmo:project_list' %}"><span class="i"><i data-lucide="gantt-chart" class="h-5 w-5"></i></span><h3>Traditional Gantt planning</h3><p>Interactive Gantt with drag, dependency links, baselines, deadlines &amp; the critical path.</p></a>
+    <a class="cap-card" href="{% url 'pmo:project_list' %}"><span class="i"><i data-lucide="rocket" class="h-5 w-5"></i></span><h3>Modern Agile scheduling</h3><p>Sprints, backlog, story points and a drag-and-drop Kanban board.</p></a>
+    <a class="cap-card" href="{% url 'pmo:project_list' %}"><span class="i"><i data-lucide="flame" class="h-5 w-5"></i></span><h3>Critical Path management</h3><p>Driving-chain critical path highlighting across the plan.</p></a>
+    <a class="cap-card" href="{% url 'pmo:project_list' %}"><span class="i"><i data-lucide="history" class="h-5 w-5"></i></span><h3>Saved baselines</h3><p>Capture named baselines and compare start/finish/duration variance.</p></a>
+    <a class="cap-card" href="{% url 'pmo:project_list' %}"><span class="i"><i data-lucide="activity" class="h-5 w-5"></i></span><h3>Resource workload &amp; leveling</h3><p>Heatmap of allocation vs capacity, with one-click auto-leveling.</p></a>
+    <a class="cap-card" href="{% url 'pmo:project_list' %}"><span class="i"><i data-lucide="calendar-clock" class="h-5 w-5"></i></span><h3>Capacity &amp; PTO</h3><p>Part-time units and time off per resource, respected by the heatmap &amp; leveler.</p></a>
+  </div>
+
+  <p class="cap-sec">Tracking &amp; delivery</p>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a class="cap-card" href="{% url 'pmo:dashboard' %}"><span class="i"><i data-lucide="layout-dashboard" class="h-5 w-5"></i></span><h3>Dashboards</h3><p>Workspace health, overdue work and open risks.</p></a>
+    <a class="cap-card" href="{% url 'pmo:portfolio_rollup' %}"><span class="i"><i data-lucide="bar-chart-3" class="h-5 w-5"></i></span><h3>Portfolio roll-up</h3><p>Cross-project aggregation: weighted progress, risk &amp; resourcing.</p></a>
+    <a class="cap-card" href="{% url 'pmo:portfolio_list' %}"><span class="i"><i data-lucide="layers-3" class="h-5 w-5"></i></span><h3>Master projects &amp; portfolios</h3><p>Portfolio → project hierarchy and portfolio management.</p></a>
+    <a class="cap-card" href="{% url 'pmo:raid_overview' %}"><span class="i"><i data-lucide="shield-alert" class="h-5 w-5"></i></span><h3>Risk management (RAID)</h3><p>Risks, Assumptions, Issues &amp; Dependencies log.</p></a>
+    <a class="cap-card" href="{% url 'pmo:project_list' %}"><span class="i"><i data-lucide="pie-chart" class="h-5 w-5"></i></span><h3>Advanced reporting &amp; visuals</h3><p>Status, workload and progress visual reports.</p></a>
+    <a class="cap-card" href="{% url 'pmo:team' %}"><span class="i"><i data-lucide="wifi" class="h-5 w-5"></i></span><h3>Real-time collaboration</h3><p>Live auto-sync and presence — see who’s editing now.</p></a>
+  </div>
+
+  <p class="cap-sec">Data, formats &amp; customization</p>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <a class="cap-card" href="{% url 'pmo:project_list' %}"><span class="i"><i data-lucide="file-code-2" class="h-5 w-5"></i></span><h3>MS Project compatible</h3><p>MSPDI .xml import/export — opens natively in Microsoft Project.</p></a>
+    <a class="cap-card" href="{% url 'pmo:project_list' %}"><span class="i"><i data-lucide="file-down" class="h-5 w-5"></i></span><h3>Excel / PDF / PNG</h3><p>Import &amp; export Excel (columns as-is), export PDF, PNG &amp; print.</p></a>
+    <a class="cap-card" href="{% url 'pmo:project_list' %}"><span class="i"><i data-lucide="tags" class="h-5 w-5"></i></span><h3>Custom statuses &amp; fields</h3><p>Define your own statuses and Choice columns, colours &amp; categories.</p></a>
+    <a class="cap-card" href="{% url 'pmo:project_list' %}"><span class="i"><i data-lucide="eye" class="h-5 w-5"></i></span><h3>Custom views</h3><p>Save &amp; recall column, zoom, filter &amp; sort presets.</p></a>
+    <a class="cap-card" href="{% url 'pmo:project_list' %}"><span class="i"><i data-lucide="monitor" class="h-5 w-5"></i></span><h3>Works on Mac / Win / iOS</h3><p>Browser-based — any modern device, no install.</p></a>
+  </div>
+</div>
+{% endblock %}

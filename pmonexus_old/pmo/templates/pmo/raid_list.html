@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}RAID log - {{ project.name }}{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <div class="rounded-2xl bg-white p-5 shadow-card">
+    <p class="text-xs text-slate-400">
+      <a href="{% url 'pmo:project_detail' project.id %}" class="hover:text-brand-600">{{ project.name }}</a>
+      / <span class="text-slate-500">RAID log</span>
+    </p>
+    <div class="mt-1 flex items-center justify-between">
+      <h1 class="text-2xl font-semibold">RAID log — {{ project.name }}</h1>
+      <button id="raid-add"
+              class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+        <i data-lucide="plus" class="h-4 w-4"></i>New item
+      </button>
+    </div>
+    <p class="mt-1 text-sm text-slate-500">Risks, Assumptions, Issues and Dependencies. Edit any cell inline.</p>
+  </div>
+
+  <div class="card overflow-x-auto">
+    <table class="min-w-full text-left text-sm" id="raid-table">
+      <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+        <tr>
+          <th class="px-4 py-2">Type</th><th class="px-4 py-2 min-w-[220px]">Title</th>
+          <th class="px-4 py-2">Priority</th><th class="px-4 py-2">Status</th>
+          <th class="px-4 py-2">Owner</th><th class="px-4 py-2">Due</th>
+          <th class="px-4 py-2 min-w-[220px]">Mitigation / plan</th><th class="px-2 py-2"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in items %}
+        <tr class="border-t border-slate-100 align-top" data-id="{{ i.id }}">
+          <td class="px-2 py-2">
+            <select data-f="type" class="rf rounded border border-transparent bg-transparent px-1 py-1 hover:border-slate-200">
+              {% for v, l in raid_types %}<option value="{{ v }}" {% if i.type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+            </select>
+          </td>
+          <td class="px-2 py-2"><input data-f="title" value="{{ i.title }}" class="rf w-full rounded border border-transparent bg-transparent px-2 py-1 hover:border-slate-200 focus:border-brand-500 focus:outline-none"></td>
+          <td class="px-2 py-2">
+            <select data-f="priority" class="rf rounded border border-transparent bg-transparent px-1 py-1 hover:border-slate-200
+              {% if i.priority == 'CRITICAL' %}text-red-600 font-medium{% elif i.priority == 'HIGH' %}text-amber-600{% endif %}">
+              {% for v, l in raid_priorities %}<option value="{{ v }}" {% if i.priority == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+            </select>
+          </td>
+          <td class="px-2 py-2">
+            <select data-f="status" class="rf rounded border border-transparent bg-transparent px-1 py-1 hover:border-slate-200">
+              {% for v, l in raid_statuses %}<option value="{{ v }}" {% if i.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+            </select>
+          </td>
+          <td class="px-2 py-2">
+            <select data-f="owner_id" class="rf rounded border border-transparent bg-transparent px-1 py-1 hover:border-slate-200">
+              <option value="">—</option>
+              {% for u in members %}<option value="{{ u.id }}" {% if i.owner_id == u.id %}selected{% endif %}>{{ u.name }}</option>{% endfor %}
+            </select>
+          </td>
+          <td class="px-2 py-2"><input data-f="due_date" type="date" value="{{ i.due_date|date:'Y-m-d' }}" class="rf rounded border border-transparent bg-transparent px-1 py-1 hover:border-slate-200"></td>
+          <td class="px-2 py-2"><input data-f="mitigation_plan" value="{{ i.mitigation_plan|default:'' }}" placeholder="—" class="rf w-full rounded border border-transparent bg-transparent px-2 py-1 hover:border-slate-200 focus:border-brand-500 focus:outline-none"></td>
+          <td class="px-2 py-2 text-center"><button class="raid-del text-slate-300 hover:text-red-600">✕</button></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="px-4 py-8 text-center italic text-slate-400">No RAID items yet — add the first one.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  const PID = {{ project.id }};
+  function getCookie(n){const m=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)');return m?m.pop():'';}
+  async function post(url, data) {
+    const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')}, body: JSON.stringify(data) });
+    if (!res.ok) { alert(await res.text()); throw new Error('failed'); }
+    return res.json();
+  }
+  document.getElementById('raid-add').addEventListener('click', async () => {
+    const title = prompt('Title of the risk / assumption / issue / dependency:');
+    if (!title || !title.trim()) return;
+    await post(`/projects/${PID}/raid/create/`, { title: title.trim() });
+    location.reload();
+  });
+  document.querySelectorAll('#raid-table tr[data-id]').forEach(tr => {
+    const id = tr.dataset.id;
+    tr.querySelectorAll('.rf').forEach(el => {
+      const commit = () => post(`/projects/${PID}/raid/${id}/update/`, { [el.dataset.f]: el.value || null });
+      el.addEventListener(el.tagName === 'SELECT' || el.type === 'date' ? 'change' : 'blur', commit);
+    });
+    tr.querySelector('.raid-del').addEventListener('click', async () => {
+      if (!confirm('Delete this RAID item?')) return;
+      await post(`/projects/${PID}/raid/${id}/delete/`, {});
+      tr.remove();
+    });
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Portfolio timeline - PMONexus{% endblock %}
+{% block extra_head %}
+<style>
+  .kpi { border: 1px solid var(--panel-border); border-radius: 1rem; background: var(--panel-bg); padding: 1rem 1.25rem; }
+  .kpi .n { font-size: 1.6rem; font-weight: 800; color: #0f172a; line-height: 1; }
+  .kpi .l { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; margin-top: .35rem; }
+  .tl-wrap { overflow-x: auto; }
+  .tl-grid { position: relative; min-width: 760px; }
+  .tl-row { display: grid; grid-template-columns: 220px 1fr; align-items: center; border-bottom: 1px solid #eef2f7; }
+  .tl-label { padding: .55rem .75rem; }
+  .tl-label a { font-weight: 600; color: #334155; font-size: .84rem; }
+  .tl-label a:hover { color: var(--brand-600, #0056b3); }
+  .tl-label .sub { font-size: .68rem; color: #94a3b8; margin-top: 2px; }
+  .tl-track { position: relative; height: 44px; }
+  .tl-bar { position: absolute; top: 11px; height: 22px; border-radius: 6px; background: #c7d2fe;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); overflow: hidden; }
+  .tl-bar .fill { position: absolute; inset: 0; width: var(--w); border-radius: 6px 0 0 6px; }
+  .tl-bar.green .fill { background: #16a34a; } .tl-bar.amber .fill { background: #f59e0b; } .tl-bar.red .fill { background: #dc2626; }
+  .tl-bar .pct { position: absolute; right: 6px; top: 3px; font-size: .64rem; font-weight: 700; color: #1e293b; }
+  .tl-ms { position: absolute; top: 15px; width: 12px; height: 12px; background: #7c3aed; transform: rotate(45deg) translateX(-50%);
+           box-shadow: 0 0 0 1px #fff; border-radius: 2px; }
+  .tl-ms.done { background: #16a34a; }
+  .tl-months { display: grid; grid-template-columns: 220px 1fr; border-bottom: 2px solid #e2e8f0; }
+  .tl-months .axis { position: relative; height: 26px; }
+  .tl-tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid #eef2f7; padding-left: 4px;
+             font-size: .64rem; color: #94a3b8; white-space: nowrap; }
+  .tl-gridline { position: absolute; top: 0; bottom: 0; border-left: 1px solid #f1f5f9; }
+  .tl-today { position: absolute; top: 0; bottom: 0; border-left: 2px dashed #f59e0b; z-index: 3; }
+  .tl-today .cap { position: absolute; top: -2px; left: -18px; font-size: .58rem; font-weight: 800; color: #b45309; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <div>
+    <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Portfolio management</p>
+    <h1 class="mt-1 text-2xl font-semibold">Portfolio timeline</h1>
+    <p class="mt-1 text-sm text-slate-500">Every project as a single bar on one shared axis — progress fill, milestone diamonds and today marker for a one-glance portfolio Gantt.</p>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-3">
+    <div class="kpi"><div class="n">{{ totals.projects }}</div><div class="l">Projects on timeline</div></div>
+    <div class="kpi"><div class="n">{{ totals.milestones }}</div><div class="l">Milestones</div></div>
+    <div class="kpi"><div class="n {% if totals.overdue %}text-red-600{% endif %}">{{ totals.overdue }}</div><div class="l">Overdue tasks</div></div>
+  </div>
+
+  {% if rows %}
+  <div class="card overflow-hidden">
+    <div class="tl-wrap">
+      <div class="tl-grid">
+        <div class="tl-months">
+          <div class="px-3 py-1 text-[0.62rem] uppercase tracking-wide text-slate-400 self-center">Project</div>
+          <div class="axis">
+            {% for m in axis.months %}<span class="tl-tick" style="left: {{ m.pct }}%">{{ m.label }}</span>{% endfor %}
+            {% if axis.today_pct is not None %}<span class="tl-today" style="left: {{ axis.today_pct }}%"><span class="cap">TODAY</span></span>{% endif %}
+          </div>
+        </div>
+
+        {% for r in rows %}
+        <div class="tl-row">
+          <div class="tl-label">
+            <a href="{% url 'pmo:project_detail' r.project.id %}">{{ r.project.name }}</a>
+            <div class="sub">
+              {{ r.start|date:"d M y" }} – {{ r.end|date:"d M y" }} · {{ r.tasks }} task{{ r.tasks|pluralize }}
+              {% if r.portfolio %} · {{ r.portfolio }}{% endif %}
+            </div>
+          </div>
+          <div class="tl-track">
+            {% for m in axis.months %}<span class="tl-gridline" style="left: {{ m.pct }}%"></span>{% endfor %}
+            {% if axis.today_pct is not None %}<span class="tl-today" style="left: {{ axis.today_pct }}%"></span>{% endif %}
+            <div class="tl-bar {{ r.health }}" style="left: {{ r.left_pct }}%; width: {{ r.width_pct }}%"
+                 title="{{ r.project.name }} — {{ r.progress }}% complete">
+              <span class="fill" style="--w: {{ r.progress }}%"></span>
+              <span class="pct">{{ r.progress }}%</span>
+            </div>
+            {% for m in r.milestones %}
+            <span class="tl-ms {% if m.done %}done{% endif %}" style="left: {{ m.pct }}%"
+                  title="{{ m.name }} — {{ m.date|date:'d M Y' }}{% if m.done %} (done){% endif %}"></span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-5 border-t px-5 py-3 text-xs text-slate-500" style="border-color: var(--panel-border)">
+      <span class="inline-flex items-center gap-2"><span class="tl-ms" style="position: static; transform: rotate(45deg); display: inline-block"></span> Milestone</span>
+      <span class="inline-flex items-center gap-2"><span class="tl-ms done" style="position: static; transform: rotate(45deg); display: inline-block"></span> Completed milestone</span>
+      <span class="inline-flex items-center gap-2"><span style="width:22px;height:10px;border-radius:4px;background:#16a34a;display:inline-block"></span> On track</span>
+      <span class="inline-flex items-center gap-2"><span style="width:22px;height:10px;border-radius:4px;background:#f59e0b;display:inline-block"></span> At risk</span>
+      <span class="inline-flex items-center gap-2"><span style="width:22px;height:10px;border-radius:4px;background:#dc2626;display:inline-block"></span> Behind</span>
+    </div>
+  </div>
+  {% else %}
+  <div class="card p-8 text-center text-slate-500">No scheduled projects yet. Add tasks with start and finish dates to see them on the portfolio timeline.</div>
+  {% endif %}
+</div>
+{% endblock %}

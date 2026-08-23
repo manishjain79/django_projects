@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+    {% if title %}
+        {{ title }}
+    {% else %}
+        GClist
+    {% endif %}
+{% endblock %}
+
+{% block middle_header %}
+    {% if 'associatedservice' in app_url %}
+        <p style="font-size: 1.5vw;">Tokio Marine Asset List & Associated NTT Services</p>
+    {% elif 'cmdb' in app_url %}
+        <p style="font-size: 1.5vw;">Tokio Marine Configuration Management Database</p>
+    {% endif %}
+{% endblock %}
+
+{% block sidenav_css %}
+    <link rel="stylesheet" href="{% static 'stylesheets/sidenav.css' %}" type="text/css">
+{% endblock %}
+
+{% block sidenav_link_css %}
+    <link rel="stylesheet" href="{% static 'stylesheets/sidenav-link.css' %}" type="text/css">
+{% endblock %}
+
+{% block contents_below_header %}
+    <div class="contents-below-header">
+        <div class="sidenav">
+            <div class="sidenav-links">
+                <div class="sidenav-link">
+                    <a href="{% url 'ciassocatedservice:ciassociatedservice-home' %}" style="font-size: 16px;">
+                        Home
+                    </a>
+                </div>
+                {% for gc in assigned_gc %}
+                    <div class="sidenav-link">
+                        {% if 'associatedservice' in app_url %}
+                            <a href="{% url 'ciassocatedservice:assetlist' gc %}">
+                                {{ gc }}
+                            </a>
+                        {% elif 'cmdb' in app_url %}
+                            <a href="{% url 'ciassocatedservice:assetlist_cmdb' gc %}">
+                                {{ gc }}
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        {% block uploadform %}
+        {% endblock %}
+
+        {% block mytable %}
+        {% endblock %}
+    </div>
+{% endblock %}

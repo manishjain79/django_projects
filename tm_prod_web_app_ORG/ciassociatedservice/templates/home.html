@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if title %}
+        {{ title }}
+    {% else %}
+        Home
+    {% endif %}
+{% endblock %}
+
+{% block contents_below_header %}
+    <div class="contents-below-header">
+        <div class="homepage-contents">
+            {% block tm_logo %}
+                <img src="{% static 'images/TM-logo.png' %}" alt="">
+            {% endblock %}
+
+            {% block home_msg %}
+                <p>
+                    Please select your GC to pull the details of each asset on-boarded with NTT MDR or Sec-DM services. You can also use the search feature to look for your assets using hostname and ip address as well. This list is kept up-to-date using every decommissioning and on-boarding requests which goes through NTT SG Service Delivery Team. For any clarification , pls contact NTT SG Service Delivery Team.
+                </p>
+            {% endblock %}
+            
+            {% block main_link %}
+                {% if rolepermission == 'Read' %}
+                    <a href="{% url 'ciassocatedservice:gclist' %}">
+                        Click here to check the asset list for your GC.
+                    </a>
+                    <br>
+                    <a href="{% url 'ciassocatedservice:gclist_cmdb' %}">
+                        Click here to check the cmdb for your GC.
+                    </a>
+                {% elif rolepermission == "Admin" %}
+                    <a href="{% url 'ciassocatedservice:gclist' %}">
+                        Click here to check the asset list for your GC.
+                    </a>
+                    <br>
+                    <a href="{% url 'ciassocatedservice:gclist_cmdb' %}">
+                        Click here to check the cmdb for your GC.
+                    </a>
+                {% endif %}
+            {% endblock %}
+        </div>
+    </div>
+{% endblock %}

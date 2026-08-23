@@ -1,0 +1,22 @@
+.sidenav-link {
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.sidenav-link a {
+    color: white;
+    font-size: 18px;
+    text-decoration: none;
+}
+
+.sidenav-link a:hover {
+    background-color: rgb(128, 208, 245);
+    color: black;
+}
+
+.sidenav-link a:active {
+    background-color: rgb(128, 208, 245);
+    color: black;
+}

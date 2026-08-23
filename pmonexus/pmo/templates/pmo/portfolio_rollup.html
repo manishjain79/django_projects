@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Portfolio roll-up - PMONexus{% endblock %}
+{% block extra_head %}
+<style>
+  .kpi { border: 1px solid var(--panel-border); border-radius: 1rem; background: var(--panel-bg); padding: 1rem 1.25rem; }
+  .kpi .n { font-size: 1.6rem; font-weight: 800; color: #0f172a; line-height: 1; }
+  .kpi .l { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; margin-top: .35rem; }
+  .bar { height: 8px; border-radius: 999px; background: #eef2f7; overflow: hidden; }
+  .bar > span { display: block; height: 100%; border-radius: 999px; background: #217346; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot.green { background: #16a34a; } .dot.amber { background: #f59e0b; } .dot.red { background: #dc2626; }
+  .pill { display: inline-flex; align-items: center; gap: .35rem; border-radius: 999px; padding: .1rem .55rem; font-size: .72rem; font-weight: 600; }
+  .roll-table td, .roll-table th { padding: .5rem .75rem; border-bottom: 1px solid #eef2f7; font-size: .82rem; }
+  .roll-table th { text-align: left; font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; }
+  .roll-table td.num, .roll-table th.num { text-align: right; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <div>
+    <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Portfolio management</p>
+    <h1 class="mt-1 text-2xl font-semibold">Portfolio roll-up</h1>
+    <p class="mt-1 text-sm text-slate-500">Every portfolio aggregated across its projects — weighted progress, delivery risk and resourcing at a glance.</p>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+    <div class="kpi"><div class="n">{{ totals.portfolios }}</div><div class="l">Portfolios</div></div>
+    <div class="kpi"><div class="n">{{ totals.projects }}</div><div class="l">Projects</div></div>
+    <div class="kpi"><div class="n">{{ totals.progress }}%</div><div class="l">Weighted progress</div></div>
+    <div class="kpi"><div class="n">{{ totals.tasks }}</div><div class="l">Tasks</div></div>
+    <div class="kpi"><div class="n {% if totals.overdue %}text-red-600{% endif %}">{{ totals.overdue }}</div><div class="l">Overdue</div></div>
+    <div class="kpi"><div class="n {% if totals.open_raid %}text-amber-600{% endif %}">{{ totals.open_raid }}</div><div class="l">Open risks</div></div>
+  </div>
+
+  {% for c in cards %}
+  <div class="card overflow-hidden">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4" style="border-color: var(--panel-border)">
+      <div class="flex items-center gap-3">
+        <span class="dot {{ c.health }}"></span>
+        <div>
+          <h2 class="text-lg font-semibold">{{ c.portfolio.name }}</h2>
+          <p class="text-xs text-slate-400">
+            {{ c.project_count }} project{{ c.project_count|pluralize }} ·
+            {{ c.resources }} resource{{ c.resources|pluralize }}
+            {% if c.start %} · {{ c.start|date:"M Y" }}{% if c.end %} – {{ c.end|date:"M Y" }}{% endif %}{% endif %}
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-6">
+        <div class="w-48">
+          <div class="mb-1 flex justify-between text-xs text-slate-500"><span>Weighted progress</span><span class="font-semibold">{{ c.progress }}%</span></div>
+          <div class="bar"><span style="width: {{ c.progress }}%"></span></div>
+        </div>
+        <div class="text-center"><div class="text-lg font-bold {% if c.overdue %}text-red-600{% endif %}">{{ c.overdue }}</div><div class="text-[10px] uppercase tracking-wide text-slate-400">Overdue</div></div>
+        <div class="text-center"><div class="text-lg font-bold {% if c.open_raid %}text-amber-600{% endif %}">{{ c.open_raid }}</div><div class="text-[10px] uppercase tracking-wide text-slate-400">Risks</div></div>
+        <div class="text-center"><div class="text-lg font-bold">{{ c.milestones }}</div><div class="text-[10px] uppercase tracking-wide text-slate-400">Milestones</div></div>
+      </div>
+    </div>
+    <table class="roll-table w-full">
+      <thead>
+        <tr>
+          <th>Project</th><th class="num">Progress</th><th class="num">Tasks</th><th class="num">Done</th>
+          <th class="num">Overdue</th><th class="num">Risks</th><th class="num">Finish</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in c.rows %}
+        <tr>
+          <td><span class="dot {{ r.health }}"></span> <a href="{% url 'pmo:project_detail' r.project.id %}" class="font-medium text-slate-700 hover:text-brand-600">{{ r.project.name }}</a></td>
+          <td class="num">
+            <div class="flex items-center justify-end gap-2"><span>{{ r.progress }}%</span><div class="bar w-20"><span style="width: {{ r.progress }}%"></span></div></div>
+          </td>
+          <td class="num">{{ r.tasks }}</td>
+          <td class="num">{{ r.done }}</td>
+          <td class="num {% if r.overdue %}text-red-600 font-semibold{% endif %}">{{ r.overdue }}</td>
+          <td class="num {% if r.open_raid %}text-amber-600{% endif %}">{{ r.open_raid }}</td>
+          <td class="num text-slate-500">{% if r.end %}{{ r.end|date:"d M Y" }}{% else %}—{% endif %}</td>
+          <td class="num"><a href="{% url 'pmo:project_detail' r.project.id %}" class="text-brand-600 hover:underline">Open</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% empty %}
+  <div class="card p-8 text-center text-slate-500">No portfolios yet. Create one from the Portfolios page to see roll-ups here.</div>
+  {% endfor %}
+
+  {% if unassigned %}
+  <div class="card overflow-hidden">
+    <div class="border-b px-5 py-4" style="border-color: var(--panel-border)">
+      <h2 class="text-lg font-semibold">Not in a portfolio</h2>
+      <p class="text-xs text-slate-400">{{ unassigned|length }} project{{ unassigned|length|pluralize }} not yet assigned to a portfolio.</p>
+    </div>
+    <table class="roll-table w-full">
+      <thead><tr><th>Project</th><th class="num">Progress</th><th class="num">Tasks</th><th class="num">Overdue</th><th class="num">Finish</th><th></th></tr></thead>
+      <tbody>
+        {% for r in unassigned %}
+        <tr>
+          <td><span class="dot {{ r.health }}"></span> <a href="{% url 'pmo:project_detail' r.project.id %}" class="font-medium text-slate-700 hover:text-brand-600">{{ r.project.name }}</a></td>
+          <td class="num"><div class="flex items-center justify-end gap-2"><span>{{ r.progress }}%</span><div class="bar w-20"><span style="width: {{ r.progress }}%"></span></div></div></td>
+          <td class="num">{{ r.tasks }}</td>
+          <td class="num {% if r.overdue %}text-red-600 font-semibold{% endif %}">{{ r.overdue }}</td>
+          <td class="num text-slate-500">{% if r.end %}{{ r.end|date:"d M Y" }}{% else %}—{% endif %}</td>
+          <td class="num"><a href="{% url 'pmo:project_detail' r.project.id %}" class="text-brand-600 hover:underline">Open</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

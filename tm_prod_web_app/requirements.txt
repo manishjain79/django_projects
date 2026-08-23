@@ -1,0 +1,6 @@
+django
+pandas
+openpyxl
+whitenoise
+azure.identity==1.17.1
+azure.storage.blob

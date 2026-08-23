@@ -1,0 +1,110 @@
+.header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center; /* this is vertical alignment in case of flex-direction: row */
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    height: 50px;
+    background-color: #282d3f;
+    color: white;
+    z-index: 9999;
+}
+
+.leftsection {
+    display: inline-block;
+}
+
+.middlesection {
+    flex: 1;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.rightsection {
+    display: inline-block;
+    justify-content: end;
+    margin-right: 20px;
+    font-size: 1.5vw;
+}
+
+.leftsection img {
+    margin-left: 10px;
+    margin-right: 30px;
+}
+
+.middlesection p {
+    margin-top: 0px;
+    margin-bottom: 0px;
+    font-size: 1.5vw;
+}
+
+/* Media Query for Mobile Devices */
+
+@media (max-width: 400px) {
+    /* .middlesection p,
+    .rightsection {
+        font-size: 10px;
+    }
+    .leftsection img {
+        width: 60px;
+    } */
+}
+
+@media (min-width: 400px) and (max-width: 480px) {
+    /* .middlesection p,
+    .rightsection {
+        font-size: 12px;
+    }
+    .leftsection img {
+        width: 70px;
+    } */
+}
+
+/* Media Query for low resolution  Tablets, Ipads */
+@media (min-width: 481px) and (max-width: 767px) {
+    /* .middlesection p,
+    .rightsection {
+        font-size: 16px;
+    }
+    .leftsection img {
+        width: 90px;
+    } */
+}
+
+/* Media Query for Tablets Ipads portrait mode */
+@media (min-width: 768px) and (max-width: 1024px) {
+    /* .middlesection p,
+    .rightsection {
+        font-size: 18px;
+    }
+    .leftsection img {
+        width: 110px;
+    } */
+}
+
+/* Media Query for Laptops and Desktops */
+@media (min-width: 1025px) and (max-width: 1280px) {
+    /* .middlesection p,
+    .rightsection {
+        font-size: 20px;
+    }
+    .leftsection img {
+        width: 130px;
+    } */
+}
+
+/* Media Query for Large screens */
+@media (min-width: 1281px) {
+    /* .middlesection p,
+    .rightsection {
+        font-size: 20px;
+    }
+    .leftsection img {
+        width: 150px;
+    } */
+}

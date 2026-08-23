@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ project.name }} - PMONexus{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'pmo/planner/planner.css' %}">
+{% endblock %}
+{% block content %}
+<div class="space-y-2">
+  <p class="px-1 text-xs text-slate-400">
+    <a href="{% url 'pmo:portfolio_list' %}" class="hover:text-brand-600">Portfolios</a>
+    {% if portfolio %} / <span class="text-slate-500">{{ portfolio.name }}</span>{% endif %}
+    / <span class="font-medium text-slate-600">{{ project.name }}</span>
+  </p>
+
+  <div id="planner-root"
+       data-project-id="{{ project.id }}"
+       data-statuses="{{ task_statuses_json }}"
+       data-urls='{"board": "{% url 'pmo:project_board' project.id %}", "network": "{% url 'pmo:project_network' project.id %}", "raid": "{% url 'pmo:raid_list' project.id %}", "timelog": "{% url 'pmo:project_timelog' project.id %}", "exportExcel": "{% url 'pmo:excel_export' project.id %}", "exportMsp": "{% url 'pmo:msp_export' project.id %}", "presence": "{% url 'pmo:presence' project.id %}", "classic": "{% url 'pmo:project_classic' project.id %}", "dashboard": "{% url 'pmo:dashboard' %}", "projects": "{% url 'pmo:project_list' %}", "portfolios": "{% url 'pmo:portfolio_list' %}", "team": "{% url 'pmo:team' %}", "raidOverview": "{% url 'pmo:raid_overview' %}", "projectsJson": "{% url 'pmo:projects_json' %}", "projectCreate": "{% url 'pmo:project_create' %}"}'></div>
+<style media="print">
+  #ribbon, .editor-hints { display: none !important; }
+  .editor-scroll { max-height: none !important; overflow: visible !important; }
+  main { padding: 0 !important; }
+</style>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script type="module" src="{% static 'pmo/planner/planner.js' %}"></script>
+{% endblock %}

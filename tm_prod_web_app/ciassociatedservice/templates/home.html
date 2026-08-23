@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if title %}
+        {{ title }}
+    {% else %}
+        Home
+    {% endif %}
+{% endblock %}
+
+{% block contents_below_header %}
+    <div class="contents-below-header">
+        <div class="homepage-contents">
+            {% block tm_logo %}
+                <img src="{% static 'images/TM-logo.png' %}" alt="">
+            {% endblock %}
+            <a href="{% url 'ciassocatedservice:gclist' %}">
+                Please click here - Assets Data
+            </a>
+            <p>
+                To access details of each asset onboarded with NTT MDR or Sec-DM services, please select your GC. You can also search for assets using their hostname or IP address. This list is regularly updated with every decommissioning and onboarding request processed by the NTT SG Service Delivery Team. For any clarifications regarding the assets, please contact the NTT SG Service Team.
+            </p>
+            <br>
+            <a href="{% url 'ciassocatedservice:gclist_cmdb' %}">
+                Please click here - Configuration Management DB
+            </a>
+            <p>
+                Please use the link above to view the Configuration Management Database (CMDB) for the assets managed by NTT Data for your respective GCs:
+            </p>
+        </div>
+    </div>
+{% endblock %}

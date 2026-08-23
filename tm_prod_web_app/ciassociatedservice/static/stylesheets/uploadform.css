@@ -1,0 +1,24 @@
+.contents-below-header {
+    /* align-items: start;
+    justify-content: center; */  /* this is horizontal alignment in case of flex-direction: row */
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;  /* this is horizontal alignment in case of flex-direction: column */
+    height: 100%;
+}
+
+.uploadform {
+    margin-left: 100px;
+    margin-top: 50px;
+    color: white;
+    background-color: hsl(226, 23%, 11%);
+    font-size: 14px;
+}
+
+
+.bloblist {
+    margin-left: 100px;
+    margin-top: 40px;
+    color: aqua;
+}

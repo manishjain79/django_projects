@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Team &amp; users - PMONexus{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-semibold">Team &amp; users</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        {% if is_admin %}Add people, set workspace roles, and grant project access. Non-admins only see projects they're assigned to.
+        {% else %}Your workspace team. Ask an admin to change roles or project access.{% endif %}
+      </p>
+    </div>
+    {% if is_admin %}
+    <button id="btn-add-user" class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+      <i data-lucide="user-plus" class="h-4 w-4"></i>Add user
+    </button>
+    {% endif %}
+  </div>
+
+  <div class="card overflow-x-auto">
+    <table class="min-w-full text-left text-sm">
+      <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+        <tr>
+          <th class="px-5 py-2">Name</th><th class="px-4 py-2">Email</th><th class="px-4 py-2">Workspace role</th>
+          <th class="px-4 py-2">Projects</th><th class="px-4 py-2">Hours logged</th>
+          {% if is_admin %}<th class="px-4 py-2">Grant project access</th><th class="px-2 py-2"></th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr class="border-t border-slate-100" data-id="{{ r.id }}">
+          <td class="px-5 py-3 font-medium">{{ r.name }}{% if r.is_me %} <span class="badge bg-brand-50 text-brand-700">you</span>{% endif %}</td>
+          <td class="px-4 py-3 text-slate-500">{{ r.email }}</td>
+          <td class="px-4 py-3">
+            {% if is_admin and not r.is_me %}
+            <select class="role-sel rounded-lg border border-slate-200 px-2 py-1 text-sm">
+              {% for v, l in roles %}<option value="{{ v }}" {% if r.workspace_role == v %}selected{% endif %}>{% if v == 'GLOBAL_ADMIN' %}Admin{% else %}Member{% endif %}</option>{% endfor %}
+            </select>
+            {% else %}
+            <span class="badge {% if r.workspace_role == 'GLOBAL_ADMIN' %}bg-brand-50 text-brand-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+              {% if r.workspace_role == 'GLOBAL_ADMIN' %}Admin{% else %}Member{% endif %}</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3">{{ r.project_count }}</td>
+          <td class="px-4 py-3">{{ r.total_hours }}</td>
+          {% if is_admin %}
+          <td class="px-4 py-3">
+            <div class="flex gap-1">
+              <select class="ap-project rounded-lg border border-slate-200 px-2 py-1 text-xs">
+                <option value="">Project…</option>
+                {% for p in projects %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+              </select>
+              <select class="ap-role rounded-lg border border-slate-200 px-2 py-1 text-xs">
+                {% for v, l in project_roles %}<option value="{{ v }}" {% if v == 'EDITOR' %}selected{% endif %}>{{ l|title }}</option>{% endfor %}
+              </select>
+              <button class="ap-go rounded-lg border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50">Grant</button>
+            </div>
+          </td>
+          <td class="px-2 py-3 text-center">
+            {% if not r.is_me %}<button class="user-rm text-slate-300 hover:text-red-600" title="Remove from workspace">✕</button>{% endif %}
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if is_admin %}
+<div id="au-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
+  <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+    <h2 class="text-lg font-semibold">Add user</h2>
+    <p class="mt-1 text-sm text-slate-500">They'll sign in with their company (Entra ID) account.</p>
+    <form id="au-form" class="mt-4 space-y-3">
+      <input name="name" placeholder="Full name" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+      <input name="email" type="email" required placeholder="email@company.com" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+      <div class="grid grid-cols-2 gap-3">
+        <select name="role" id="au-role" class="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500">
+          <option value="MEMBER">Member</option><option value="GLOBAL_ADMIN">Admin (full workspace)</option>
+        </select>
+        <select name="project_id" id="au-project" class="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500">
+          <option value="">No project yet</option>
+          {% for p in projects %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <p id="au-admin-note" class="hidden text-xs text-slate-500">Admins automatically see every portfolio and project — no project grant needed.</p>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" id="au-cancel" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+        <button type="submit" class="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Add</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{% if is_admin %}
+<script>
+(function () {
+  function getCookie(n){const m=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)');return m?m.pop():'';}
+  async function post(url, data) {
+    const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')}, body: JSON.stringify(data) });
+    if (!res.ok) { alert(await res.text()); throw new Error('failed'); }
+    return res.json();
+  }
+  const modal = document.getElementById('au-modal');
+  const roleSelAdd = document.getElementById('au-role');
+  roleSelAdd.addEventListener('change', () => {
+    const isAdmin = roleSelAdd.value === 'GLOBAL_ADMIN';
+    const proj = document.getElementById('au-project');
+    proj.disabled = isAdmin;
+    if (isAdmin) proj.value = '';
+    document.getElementById('au-admin-note').classList.toggle('hidden', !isAdmin);
+  });
+  document.getElementById('btn-add-user').addEventListener('click', () => { modal.classList.remove('hidden'); modal.classList.add('flex'); });
+  document.getElementById('au-cancel').addEventListener('click', () => { modal.classList.add('hidden'); modal.classList.remove('flex'); });
+  modal.addEventListener('click', (e) => { if (e.target === modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); } });
+  document.getElementById('au-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    await post("{% url 'pmo:user_add' %}", {
+      name: f.name.value, email: f.email.value, role: f.role.value,
+      project_id: f.project_id.value ? parseInt(f.project_id.value) : null,
+    });
+    location.reload();
+  });
+  document.querySelectorAll('tr[data-id]').forEach(tr => {
+    const uid = tr.dataset.id;
+    const roleSel = tr.querySelector('.role-sel');
+    if (roleSel) roleSel.addEventListener('change', () => post(`/team/${uid}/role/`, { role: roleSel.value }));
+    const rm = tr.querySelector('.user-rm');
+    if (rm) rm.addEventListener('click', async () => {
+      if (!confirm('Remove this user from the workspace and all projects?')) return;
+      await post(`/team/${uid}/remove/`, {});
+      tr.remove();
+    });
+    const go = tr.querySelector('.ap-go');
+    if (go) go.addEventListener('click', async () => {
+      const pid = tr.querySelector('.ap-project').value;
+      if (!pid) { alert('Pick a project first'); return; }
+      await post("{% url 'pmo:user_assign_project' %}", {
+        user_id: parseInt(uid), project_id: parseInt(pid), role: tr.querySelector('.ap-role').value,
+      });
+      location.reload();
+    });
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}Portfolios - PMONexus{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-semibold">Portfolios</h1>
+      <p class="mt-1 text-sm text-slate-500">Portfolio &rarr; Projects &rarr; Phases &rarr; Tasks &rarr; Subtasks</p>
+    </div>
+    <button id="btn-new-portfolio"
+            class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+      <i data-lucide="plus" class="h-4 w-4"></i>New portfolio
+    </button>
+  </div>
+
+  {% for row in rows %}
+  <div class="card p-5">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <h2 class="flex items-center gap-2 text-lg font-semibold">
+          <i data-lucide="layers-3" class="h-4 w-4 text-brand-600"></i>{{ row.portfolio.name }}
+        </h2>
+        <p class="text-sm text-slate-500">
+          {{ row.portfolio.description|default:"" }}
+          {{ row.project_count }} project{{ row.project_count|pluralize }}
+          &middot; {{ row.open_raid }} open RAID
+          {% if row.start %}&middot; {{ row.start|date:"d M Y" }} &rarr; {{ row.end|date:"d M Y"|default:"…" }}{% endif %}
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <a href="{% url 'pmo:portfolio_raid' row.portfolio.id %}"
+           class="rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50">RAID</a>
+        <button class="np-open rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                data-portfolio="{{ row.portfolio.id }}">+ Project</button>
+        <button class="pf-delete rounded-xl border border-slate-200 px-3 py-1.5 text-sm text-slate-400 hover:bg-red-50 hover:text-red-600"
+                data-id="{{ row.portfolio.id }}" data-name="{{ row.portfolio.name }}" title="Delete portfolio (projects are kept)">✕</button>
+      </div>
+    </div>
+    <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {% for p in row.projects %}
+      <a href="{% url 'pmo:project_detail' p.id %}" class="rounded-xl border border-slate-200 p-4 hover:border-brand-500 hover:shadow-md">
+        <div class="flex items-center justify-between">
+          <span class="font-medium">{{ p.name }}</span>
+          <span class="badge bg-slate-100 text-slate-600">{{ p.get_status_display }}</span>
+        </div>
+        <p class="mt-1 text-xs text-slate-500">
+          {{ p.owner.name|default:"Unassigned" }}
+          {% if p.start_date %}&middot; {{ p.start_date|date:"d M" }} &rarr; {{ p.end_date|date:"d M Y"|default:"…" }}{% endif %}
+        </p>
+      </a>
+      {% empty %}
+      <p class="text-sm italic text-slate-400">No projects yet — add one.</p>
+      {% endfor %}
+    </div>
+
+    {% for child in row.children %}
+    <div class="mt-4 rounded-xl border-l-4 border-brand-500 bg-slate-50 p-4">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3 class="flex items-center gap-2 text-base font-semibold">
+          <i data-lucide="corner-down-right" class="h-4 w-4 text-slate-400"></i>{{ child.portfolio.name }}
+          <span class="badge bg-brand-50 text-brand-700">sub-portfolio</span>
+        </h3>
+        <p class="text-xs text-slate-500">{{ child.project_count }} project{{ child.project_count|pluralize }} · {{ child.open_raid }} open RAID</p>
+      </div>
+      <div class="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {% for p in child.projects %}
+        <a href="{% url 'pmo:project_detail' p.id %}" class="rounded-xl border border-slate-200 bg-white p-3 hover:border-brand-500 hover:shadow-md">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium">{{ p.name }}</span>
+            <span class="badge bg-slate-100 text-slate-600">{{ p.get_status_display }}</span>
+          </div>
+        </a>
+        {% empty %}<p class="text-xs italic text-slate-400">No projects in this sub-portfolio yet.</p>{% endfor %}
+      </div>
+      {% for gchild in child.children %}
+      <p class="mt-2 text-xs text-slate-500">↳ {{ gchild.portfolio.name }} ({{ gchild.project_count }} project{{ gchild.project_count|pluralize }})</p>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  {% empty %}
+  <div class="card p-10 text-center text-slate-500">No portfolios yet. Create one to group your projects.</div>
+  {% endfor %}
+
+  {% if unassigned %}
+  <div class="card p-5">
+    <h2 class="text-lg font-semibold text-slate-600">Projects without a portfolio</h2>
+    <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {% for p in unassigned %}
+      <div class="rounded-xl border border-dashed border-slate-300 p-4">
+        <div class="flex items-center justify-between">
+          <a href="{% url 'pmo:project_detail' p.id %}" class="font-medium hover:text-brand-600">{{ p.name }}</a>
+          <select class="pf-assign rounded border border-slate-200 px-1 py-0.5 text-xs" data-project="{{ p.id }}">
+            <option value="">Move to…</option>
+            {% for pf in all_portfolios %}<option value="{{ pf.id }}">{{ pf.name }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- New Portfolio modal -->
+<div id="pf-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
+  <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+    <h2 class="text-lg font-semibold">New portfolio</h2>
+    <form id="pf-form" class="mt-4 space-y-4">
+      <div>
+        <label class="text-sm font-medium text-slate-700">Name</label>
+        <input name="name" required class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+      </div>
+      <div>
+        <label class="text-sm font-medium text-slate-700">Description <span class="font-normal text-slate-400">(optional)</span></label>
+        <textarea name="description" rows="2" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500"></textarea>
+      </div>
+      <div>
+        <label class="text-sm font-medium text-slate-700">Parent portfolio <span class="font-normal text-slate-400">(optional — makes this a sub-portfolio)</span></label>
+        <select name="parent_id" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500">
+          <option value="">None — top-level portfolio</option>
+          {% for pf in all_portfolios %}<option value="{{ pf.id }}">{{ pf.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" id="pf-cancel" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+        <button type="submit" class="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- New Project modal (portfolio preset) -->
+<div id="np-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
+  <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+    <h2 class="text-lg font-semibold">New project</h2>
+    <form id="np-form" class="mt-4 space-y-4">
+      <input type="hidden" name="portfolio_id" />
+      <div>
+        <label class="text-sm font-medium text-slate-700">Name</label>
+        <input name="name" required class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm font-medium text-slate-700">Start</label>
+          <input name="start_date" type="date" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">Finish</label>
+          <input name="end_date" type="date" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500" />
+        </div>
+      </div>
+      <div>
+        <label class="text-sm font-medium text-slate-700">Status</label>
+        <select name="status" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500">
+          {% for value, label in status_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" id="np-cancel" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+        <button type="submit" class="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Create &amp; open plan</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  function getCookie(name) {
+    const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return m ? m.pop() : '';
+  }
+  async function post(url, payload) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) { alert(await res.text()); throw new Error('request failed'); }
+    return res.json();
+  }
+  const show = (m) => { m.classList.remove('hidden'); m.classList.add('flex'); };
+  const hide = (m) => { m.classList.add('hidden'); m.classList.remove('flex'); };
+
+  // portfolio modal
+  const pfModal = document.getElementById('pf-modal');
+  document.getElementById('btn-new-portfolio').addEventListener('click', () => { show(pfModal); pfModal.querySelector('[name=name]').focus(); });
+  document.getElementById('pf-cancel').addEventListener('click', () => hide(pfModal));
+  document.getElementById('pf-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    await post("{% url 'pmo:portfolio_create' %}", { name: f.name.value, description: f.description.value, parent_id: f.parent_id.value ? parseInt(f.parent_id.value) : null });
+    location.reload();
+  });
+
+  // project modal (with preset portfolio)
+  const npModal = document.getElementById('np-modal');
+  document.querySelectorAll('.np-open').forEach(b => b.addEventListener('click', () => {
+    npModal.querySelector('[name=portfolio_id]').value = b.dataset.portfolio;
+    show(npModal);
+    npModal.querySelector('[name=name]').focus();
+  }));
+  document.getElementById('np-cancel').addEventListener('click', () => hide(npModal));
+  document.getElementById('np-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const data = await post("{% url 'pmo:project_create' %}", {
+      name: f.name.value, status: f.status.value,
+      start_date: f.start_date.value || null, end_date: f.end_date.value || null,
+      portfolio_id: f.portfolio_id.value ? parseInt(f.portfolio_id.value) : null,
+    });
+    window.location.href = data.url;
+  });
+
+  // delete portfolio
+  document.querySelectorAll('.pf-delete').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm(`Delete portfolio "${b.dataset.name}"? Projects inside are kept.`)) return;
+    await post(`/portfolios/${b.dataset.id}/delete/`, {});
+    location.reload();
+  }));
+
+  // assign unassigned project
+  document.querySelectorAll('.pf-assign').forEach(s => s.addEventListener('change', async () => {
+    if (!s.value) return;
+    await post("{% url 'pmo:portfolio_assign' %}", { project_id: parseInt(s.dataset.project), portfolio_id: parseInt(s.value) });
+    location.reload();
+  }));
+
+  [pfModal, npModal].forEach(m => m.addEventListener('click', (e) => { if (e.target === m) hide(m); }));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { hide(pfModal); hide(npModal); } });
+})();
+</script>
+{% endblock %}

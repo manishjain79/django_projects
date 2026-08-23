@@ -1,0 +1,101 @@
+.contents-below-header {
+    flex: 1;
+
+    display: flex;
+    flex-direction: row;
+    background-color: hsl(226, 23%, 11%);
+    /* width: 100%; */
+}
+.homepage-contents {
+    flex: 1;
+    /* background-color: rgb(66, 65, 64); */
+    background-color: hsl(226, 23%, 11%);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* this is horizontal alignment in case of flex-direction: column */
+    height: 100%;
+}
+
+.homepage-contents img {
+    width: 100%;
+    max-width: 250px;
+    height: auto;
+    margin: 80px;
+}
+
+.homepage-contents p {
+    display: inline-block;
+    text-align: justify;
+    color: white;
+    margin-right: 100px;
+    margin-left: 100px;
+    margin-bottom: 30px;
+    font-size: 1.5vw;
+}
+
+.homepage-contents a {
+    margin-top: 40px;
+    color: white;
+    font-weight: bold;
+    font-size: large;
+}
+
+/* Media Query for Mobile Devices */
+@media (max-width: 480px) {
+    /* .homepage-contents img {
+        width: 80px;
+        margin: 80px;
+    } */
+    .homepage-contents p,a {
+        /* font-size: 12px; */
+        margin: 10px;
+    }
+}
+
+/* Media Query for low resolution  Tablets, Ipads */
+@media (min-width: 481px) and (max-width: 767px) {
+    /* .homepage-contents img {
+        width: 100px;
+        margin: 80px;
+    } */
+    .homepage-contents p,a {
+        /* font-size: 14px; */
+        margin: 10px;
+    }
+}
+
+/* Media Query for Tablets Ipads portrait mode */
+@media (min-width: 768px) and (max-width: 1024px) {
+    /* .homepage-contents img {
+        width: 150px;
+        margin: 80px;
+    } */
+    .homepage-contents p,a {
+        /* font-size: 18px; */
+        margin: 20px;
+    }
+}
+
+/* Media Query for Laptops and Desktops */
+@media (min-width: 1025px) and (max-width: 1280px) {
+    /* .homepage-contents img {
+        width: 200px;
+        margin: 80px;
+    } */
+    .homepage-contents p,a {
+        /* font-size: 20px; */
+        margin: 30px;
+    }
+}
+
+/* Media Query for Large screens */
+@media (min-width: 1281px) {
+    /* .homepage-contents img {
+        width: 250px;
+        margin: 80px;
+    } */
+    /* .homepage-contents p,a {
+        font-size: 22px;
+    } */
+}

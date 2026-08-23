@@ -1,0 +1,37 @@
+.sidenav {
+  background-color: #282d3f;
+  position: fixed;
+  left: 0;
+  top: 50px;
+  bottom: 0;
+  width: 100px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  z-index: 9998;
+}
+
+/* Define the scrollbar style */
+.sidenav::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+/* Define the thumb style */
+.sidenav::-webkit-scrollbar-thumb {
+  background-color: #3e4458;
+  border-radius: 5px;
+}
+  /* Define the track style */
+.sidenav::-webkit-scrollbar-track {
+  /* background-color: #ddd; */
+  background-color: hsl(226, 23%, 11%);
+  /* border: 1px solid #ccc; */
+}
+  /* Define the button style */
+.sidenav::-webkit-scrollbar-button {
+  background-color: #233a72;
+  border-radius: 5px;
+}
+  /* Define the button style when being hovered over */
+.sidenav::-webkit-scrollbar-button:hover {
+  background-color: #999999;
+}

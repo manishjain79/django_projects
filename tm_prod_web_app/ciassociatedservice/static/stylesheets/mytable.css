@@ -1,0 +1,93 @@
+
+.contents-below-header {
+    align-items: start;
+}
+
+.tabledata {
+    margin-top: 50px;
+    margin-right: 0px;
+    padding-bottom: 0px;
+    margin-bottom: 0px;
+    margin-left: 100px;
+    color: white;
+    flex: 1;
+    background-color: hsl(226, 23%, 11%);
+    font-size: 14px;
+}
+
+#table {
+    border-collapse: collapse;
+    font-size: 14px !important;
+    color: rgb(219, 224, 227) !important;
+}
+
+/* This decorates Export button dropdown. */
+.dt-button-collection {
+    background-color: #282d3f !important;
+    width: 70px !important;
+}
+
+/* When a row is selected this info is shown at the footer. It decorates that footer. */
+/* .dt-info .select-info {
+    margin-left: 10px !important;
+    border: 1px solid white;
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
+/* This gives a padding on left and right of dropdown menu and search bar. */
+/* #table_wrapper .dt-length {
+    padding-left: 10px;
+}
+#table_wrapper .dt-search {
+    padding-right: 17px;
+} */
+
+/* table.dataTable thead th, table.dataTable thead td, table.dataTable tfoot th, table.dataTable tfoot td {
+    text-align: right !important;
+} */
+
+/* This set the proper background color of dropdown menu */
+#dt-length-0 {
+    background-color: hsl(226, 23%, 11%);
+}
+/* This set the padding of the message at the bottom, showing # of # CIs */
+/* .dt-info {
+    padding-left: 10px;
+} */
+
+/* table td {
+    vertical-align: text-top !important;
+} */
+
+/* .dt-scroll {
+    height: 70vh;
+} */
+
+/* .dt-scroll-body::-webkit-scrollbar {
+    width: 17px;
+    height: 5px;
+} */
+
+/* .dt-scroll-body::-webkit-scrollbar-thumb {
+    background: #3e4458;
+    border-radius: 1px;
+}
+
+.dt-scroll-body::-webkit-scrollbar-track {
+    background-color: hsl(226, 23%, 11%);
+}
+
+.dt-scroll-body::-webkit-scrollbar-button {
+    background-color: #233a72;
+    border-radius: 1px;
+}
+
+.dt-scroll-body::-webkit-scrollbar-button:hover {
+    background-color: #999999;
+} */
+
+div.dt-container {
+    /* width: 1000px; */
+    margin: 0 auto;
+}

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} dashboard - PMONexus{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <div class="rounded-2xl bg-white p-5 shadow-card">
+    <p class="text-xs text-slate-400">
+      <a href="{% url 'pmo:project_detail' project.id %}" class="hover:text-brand-600">{{ project.name }}</a>
+      / <span class="text-slate-500">Project dashboard</span>
+    </p>
+    <div class="mt-1 flex flex-wrap items-center justify-between gap-2">
+      <h1 class="text-2xl font-semibold">{{ project.name }} — Steerco dashboard</h1>
+      <span class="badge {% if spi_hint == 'on track' %}bg-green-100 text-green-700{% elif spi_hint == 'at risk' %}bg-amber-100 text-amber-700{% else %}bg-red-100 text-red-700{% endif %} !px-3 !py-1 text-sm font-semibold uppercase tracking-wide">{{ spi_hint }}</span>
+    </div>
+    <p class="mt-1 text-sm text-slate-500">
+      {{ p_start|date:"d M Y"|default:"—" }} → {{ p_end|date:"d M Y"|default:"—" }}
+      &middot; {{ elapsed_pct }}% of the timeline elapsed vs {{ progress }}% work complete
+    </p>
+    <div class="mt-3 space-y-1.5">
+      <div class="flex items-center gap-2 text-xs text-slate-500"><span class="w-16">Schedule</span>
+        <div class="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div class="h-full bg-amber-400" style="width:{{ elapsed_pct }}%"></div></div>
+        <span class="w-9 text-right">{{ elapsed_pct }}%</span></div>
+      <div class="flex items-center gap-2 text-xs text-slate-500"><span class="w-16">Progress</span>
+        <div class="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div class="h-full" style="width:{{ progress }}%;background:#0033a0"></div></div>
+        <span class="w-9 text-right">{{ progress }}%</span></div>
+    </div>
+  </div>
+
+  <section class="grid gap-4 md:grid-cols-5">
+    <div class="card p-4"><p class="text-xs text-slate-500">Overall progress</p><p class="mt-1 text-2xl font-semibold">{{ progress }}%</p></div>
+    <div class="card p-4"><p class="text-xs text-slate-500">Tasks complete</p><p class="mt-1 text-2xl font-semibold">{{ done_count }}<span class="text-base font-normal text-slate-400">/{{ leaf_count }}</span></p></div>
+    <div class="card p-4"><p class="text-xs text-slate-500">Overdue</p><p class="mt-1 text-2xl font-semibold {% if overdue_count %}text-red-600{% endif %}">{{ overdue_count }}</p></div>
+    <div class="card p-4"><p class="text-xs text-slate-500">Milestones hit</p><p class="mt-1 text-2xl font-semibold">{{ ms_done }}<span class="text-base font-normal text-slate-400">/{{ ms_total }}</span></p></div>
+    <div class="card p-4"><p class="text-xs text-slate-500">Open RAID</p><p class="mt-1 text-2xl font-semibold"><a class="hover:text-brand-600" href="{% url 'pmo:raid_list' project.id %}">{{ open_raid }}</a></p></div>
+  </section>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <div class="card p-5">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Task status</h2>
+      <div class="mt-3 flex items-center gap-5">
+        <svg viewBox="0 0 120 120" width="120" height="120">
+          {% for sl in status_slices %}
+          <circle cx="60" cy="60" r="40" fill="none" stroke="{{ sl.color }}" stroke-width="18"
+                  stroke-dasharray="{% widthratio sl.n leaf_count 251 %} 251"
+                  stroke-dashoffset="-{{ sl.offset|default:0 }}"
+                  transform="rotate({% widthratio forloop.counter0 1 0 %} 60 60)"
+                  class="donut-slice" data-n="{{ sl.n }}"/>
+          {% endfor %}
+          <text x="60" y="66" text-anchor="middle" font-size="18" font-weight="700" fill="#0f172a">{{ progress }}%</text>
+        </svg>
+        <div class="space-y-1 text-sm">
+          {% for sl in status_slices %}
+          <p class="flex items-center gap-2"><span class="inline-block h-2.5 w-2.5 rounded-sm" style="background:{{ sl.color }}"></span>{{ sl.label }} <span class="text-slate-400">— {{ sl.n }} ({{ sl.pct }}%)</span></p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Progress by phase</h2>
+      <div class="mt-3 space-y-2.5">
+        {% for ph in phases %}
+        <div>
+          <p class="flex justify-between text-xs text-slate-600"><span class="truncate pr-2">{{ ph.name }}</span><span>{{ ph.done }}/{{ ph.total }} · {{ ph.progress }}%</span></p>
+          <div class="mt-1 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full" style="width:{{ ph.progress }}%;background:#0033a0"></div></div>
+        </div>
+        {% empty %}<p class="text-sm italic text-slate-400">No phases yet.</p>{% endfor %}
+      </div>
+    </div>
+
+      </div>
+
+  <div class="grid gap-4 lg:grid-cols-3">
+    <div class="card p-5">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Upcoming milestones</h2>
+      <div class="mt-3 space-y-2 text-sm">
+        {% for m in upcoming_ms %}
+        <p class="flex justify-between"><span>◆ {{ m.title }}</span><span class="text-slate-500">{{ m.end_date|date:"d M Y" }}</span></p>
+        {% empty %}<p class="italic text-slate-400">No open milestones.</p>{% endfor %}
+      </div>
+    </div>
+    <div class="card p-5">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Overdue tasks</h2>
+      <div class="mt-3 space-y-2 text-sm">
+        {% for t in overdue %}
+        <p class="flex justify-between"><span class="truncate pr-2">{{ t.title }}</span>
+          <span class="text-red-600">{{ t.end_date|date:"d M" }}{% if t.assignee %} · {{ t.assignee.name }}{% endif %}</span></p>
+        {% empty %}<p class="italic text-slate-400">Nothing overdue. 🎉</p>{% endfor %}
+      </div>
+    </div>
+    <div class="card p-5">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Top risks &amp; issues</h2>
+      <div class="mt-3 space-y-2 text-sm">
+        {% for r in raid_top %}
+        <p class="flex justify-between"><span class="truncate pr-2">{{ r.title }}</span>
+          <span class="{% if r.priority == 'CRITICAL' %}font-semibold text-red-600{% elif r.priority == 'HIGH' %}text-amber-600{% else %}text-slate-500{% endif %}">{{ r.get_priority_display }}</span></p>
+        {% empty %}<p class="italic text-slate-400">No open RAID items.</p>{% endfor %}
+      </div>
+      <a class="mt-3 inline-block text-xs font-medium text-brand-600 hover:underline" href="{% url 'pmo:raid_list' project.id %}">Open the full RAID log →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Rotate donut slices sequentially (Django templates can't accumulate offsets).
+  (function () {
+    let acc = 0;
+    document.querySelectorAll('.donut-slice').forEach(el => {
+      el.setAttribute('transform', `rotate(${acc / {{ leaf_count|default:1 }} * 360 - 90} 60 60)`);
+      acc += parseInt(el.dataset.n, 10);
+    });
+  })();
+</script>
+{% endblock %}

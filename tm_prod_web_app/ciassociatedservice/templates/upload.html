@@ -1,0 +1,64 @@
+{% extends "gclist.html" %}
+{% load static %}
+
+{% block uploadform_css %}
+    <link rel="stylesheet" href="{% static 'stylesheets/uploadform.css' %}" type="text/css">
+{% endblock %}
+
+{% block uploadform %}
+    <div class="uploadform">
+        <h3>Upload New File</h3>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="Document">
+            <button type="submit">upload</button>
+        </form>
+    </div>
+    <div class="bloblist">
+            <table border="1" style="border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th>Size</th>
+                        <th>File mtime</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for eblob in blobinfoexisting %}
+                    <tr>
+                        <td>{{eblob.blobname}}</td>
+                        <td>{{eblob.blobsize}} bytes</td>
+                        <td>{{eblob.blobmtime}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+    </div>
+    <div class="bloblist">
+        {% if blobinfonew %}
+        <table border="1" style="border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th>Filename</th>
+                    <th>Size</th>
+                    <th>File mtime</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for nblob in blobinfonew %}
+                    <tr>
+                        <td>{{nblob.blobname}}</td>
+                        <td>{{nblob.blobsize}} bytes</td>
+                        <td>{{nblob.blobmtime}}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+</div>
+    <div>
+        {% if filename_error %}
+            <p style="background-color: aqua; margin-top: 20px;">{{filename_error}}</p>
+        {% endif %}
+    </div>
+{% endblock %}

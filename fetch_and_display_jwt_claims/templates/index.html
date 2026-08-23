@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python JWT Claims Decoder</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #333; }
+        textarea { width: 100%; height: 100px; padding: 10px; margin-bottom: 10px; box-sizing: border-box; }
+        button { background: #0078d4; color: white; border: none; padding: 10px 20px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #005a9e; }
+        pre { background: #f4f4f4; padding: 15px; border-left: 5px solid #0078d4; overflow-x: auto; font-size: 14px; }
+        .error { color: #a80000; background: #fde7e9; padding: 10px; border-left: 5px solid #a80000; }
+    </style>
+</head>
+<body>
+    <h1>JWT Claims Decoder</h1>
+    <form method="POST">
+        <label for="token"><strong>Paste your encoded JWT token here:</strong></label>
+        <textarea id="token" name="token" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... " required>{{ token }}</textarea>
+        <button type="submit">Decode Claims</button>
+    </form>
+
+    {% if error %}
+        <div class="error"><p>{{ error }}</p></div>
+    {% endif %}
+
+    {% if claims %}
+        <h2>Decoded Claims (Payload)</h2>
+        <pre>{{ claims | tojson(indent=4) }}</pre>
+    {% endif %}
+</body>
+</html>
