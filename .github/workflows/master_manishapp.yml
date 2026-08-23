@@ -38,7 +38,7 @@ jobs:
         with:
           name: python-app
           path: |
-            .
+            'fetch_and_display_jwt_claims'
             !antenv/
 
       # 🚫 Opting Out of Oryx Build
